@@ -1,0 +1,470 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>강점 찾기</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one phone-width column, a deck of tappable cards, a fixed bottom bar that counts picks.
+   Selection is a yellow highlighter stroke; the four talent colours stay hidden until the result. */
+:root{
+  --bg:#F3F2F8; --surface:#FFFFFF; --fg:#1B1740; --muted:#625F80; --line:#D9D6E8;
+  --hl:#FFE647; --on-hl:#1B1740; --tl:.5; --tch:.16; --pl:.955; --pc:.035; --chip:#1B1740;
+  --ibg:#2B1D6E; --ifg:#F6F3FF; --imuted:#C3B9EE; --isurf:#3B2C8A; --iline:#5646A8;
+  --c-lead:#A3217A; --c-coop:#C25A00; --c-friend:#15803D; --c-create:#1D5FBF;
+  --display:"Black Han Sans","IBM Plex Sans KR",system-ui,sans-serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14112B; --surface:#1F1B3D; --fg:#EFEDFA; --muted:#A5A1C4; --line:#3A3563;
+  --hl:#FFE647; --on-hl:#1B1740; --tl:.8; --tch:.12; --pl:.21; --pc:.045; --chip:#1B1740;
+  --ibg:#1D1450; --ifg:#F6F3FF; --imuted:#B4AAE0; --isurf:#2C2170; --iline:#46398F;
+  --c-lead:#F07AC6; --c-coop:#FFA24D; --c-friend:#5FD48A; --c-create:#7DB2FF; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14112B; --surface:#1F1B3D; --fg:#EFEDFA; --muted:#A5A1C4; --line:#3A3563;
+  --hl:#FFE647; --on-hl:#1B1740; --tl:.8; --tch:.12; --pl:.21; --pc:.045; --chip:#1B1740;
+  --ibg:#1D1450; --ifg:#F6F3FF; --imuted:#B4AAE0; --isurf:#2C2170; --iline:#46398F;
+  --c-lead:#F07AC6; --c-coop:#FFA24D; --c-friend:#5FD48A; --c-create:#7DB2FF; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-tap-highlight-color:transparent;word-break:keep-all;overflow-wrap:anywhere}
+#app{max-width:480px;margin:0 auto;padding-inline:16px;padding-block:24px 120px;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3,p{margin:0}
+h1,h2{font-family:var(--display);font-weight:400;line-height:1.15;text-wrap:balance;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--fg);outline-offset:2px}
+svg.ic{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.eyebrow{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.muted{color:var(--muted)}
+mark{background:var(--hl);color:var(--on-hl);padding:0 .2em;border-radius:3px}
+
+[data-t="lead"]{--tc:var(--c-lead)} [data-t="coop"]{--tc:var(--c-coop)}
+[data-t="friend"]{--tc:var(--c-friend)} [data-t="create"]{--tc:var(--c-create)}
+
+.hue{--tc:oklch(var(--tl) var(--tch) var(--h))}
+/* type cards */
+.tcard{position:relative;display:grid;gap:10px;text-align:left;min-width:0;padding:14px;border:1.5px solid var(--line);border-radius:16px;background:var(--surface);color:var(--fg);transition:transform .12s ease}
+.tcard:active{transform:scale(.98)}
+.tcard .tn{font-weight:700;font-size:19px;line-height:1.2;color:var(--tc);padding-right:34px}
+.tcard .tg{font-size:14px;color:var(--muted);margin-top:-6px}
+.tcard .kw{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tcard .kw span{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding:10px 4px;border-radius:10px;
+  background:color-mix(in srgb,var(--tc) 13%,var(--surface));color:var(--tc);font-size:14px;font-weight:700}
+.tcard .badge{position:absolute;top:12px;right:12px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line);color:transparent}
+.tcard .badge svg{width:16px;height:16px;stroke-width:3}
+.tcard[aria-pressed="true"]{border-color:var(--tc);box-shadow:inset 0 0 0 1.5px var(--tc),0 0 0 4px var(--hl);background:color-mix(in srgb,var(--tc) 8%,var(--surface))}
+.tcard[aria-pressed="true"] .badge{background:var(--tc);border-color:var(--tc);color:var(--surface)}
+.group{display:grid;gap:8px}
+.group h3{font-size:15px;font-weight:700;color:var(--tc)}
+/* intro: a deep-violet poster. Strength chips drift across, 강점 is the one yellow object. */
+body[data-screen="intro"]{background:var(--ibg);color:var(--ifg)}
+.intro{display:flex;flex-direction:column;gap:22px}
+.pill{align-self:flex-start;font-size:12.5px;font-weight:700;letter-spacing:.08em;padding:6px 12px;border-radius:999px;border:1.5px solid var(--iline);color:var(--imuted)}
+.intro h1{font-size:clamp(38px,12.4vw,60px);line-height:1.05;white-space:nowrap}
+.intro h1 em{font-style:normal;color:var(--hl)}
+.lede{font-size:17px;color:var(--ifg)}
+.lede b{color:var(--hl);font-weight:700}
+.drift{display:grid;gap:10px;margin-inline:-16px;overflow:hidden;padding-block:2px}
+.drift .row{display:flex;gap:10px;width:max-content;animation:drift 38s linear infinite}
+.drift .row.rev{animation-direction:reverse;animation-duration:46s}
+.drift .chip{display:flex;align-items:center;gap:6px;padding:8px 14px 8px 10px;border-radius:999px;font-weight:700;font-size:15px;
+  background:oklch(.87 .11 var(--h));color:#1B1740;white-space:nowrap}
+.drift .chip svg.ic{width:18px;height:18px;stroke-width:2}
+@keyframes drift{to{transform:translateX(-50%)}}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch}
+.vs button{display:flex;flex-direction:column;gap:6px;text-align:left;border-radius:18px;padding:16px 14px;min-width:0;border:1.5px solid var(--iline);background:var(--isurf);color:var(--ifg)}
+.vs .k{font-family:var(--display);font-size:30px;line-height:1.1}
+.vs .m{font-size:14.5px;line-height:1.4}
+.vs .ex{font-size:13.5px;line-height:1.4;padding-top:8px;border-top:1.5px dashed currentColor;margin-top:auto}
+.vs .tap{font-size:12.5px;font-weight:700;margin-top:auto;opacity:.8}
+.vs .strong{background:var(--hl);color:var(--on-hl);border-color:var(--hl);transform:rotate(1.5deg);box-shadow:0 10px 0 -4px rgba(0,0,0,.28)}
+.vs .tag{align-self:flex-start;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--on-hl);color:var(--hl)}
+.vs .weak .tag{background:transparent;border:1.5px solid var(--iline);color:var(--imuted)}
+.vs button:focus-visible{outline-color:var(--ifg)}
+.how{display:grid;gap:10px}
+.how h2{font-family:var(--body);font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--imuted)}
+.funnel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.funnel div{display:flex;flex-direction:column;gap:4px;background:var(--isurf);border:1.5px solid var(--iline);border-radius:16px;padding:12px;min-width:0}
+.funnel .n{font-family:var(--display);font-size:44px;line-height:1;color:var(--hl)}
+.funnel .s{font-size:11.5px;font-weight:700;letter-spacing:.06em;color:var(--imuted)}
+.funnel .t{font-size:13.5px;line-height:1.35}
+.funnel div:last-child{background:var(--ifg);border-color:var(--ifg);color:var(--ibg)}
+.funnel div:last-child .n{color:var(--ibg)}
+.funnel div:last-child .s{color:var(--ibg);opacity:.7}
+.note{font-size:14.5px;color:var(--imuted)}
+.intro .cta{background:var(--hl);color:var(--on-hl);font-size:18px;padding:18px;border-radius:16px}
+.intro .cta:focus-visible{outline-color:var(--ifg)}
+@media (prefers-reduced-motion:reduce){.drift .row{animation:none}}
+.cta{width:100%;border:0;border-radius:14px;background:var(--fg);color:var(--surface);font-weight:700;font-size:17px;padding:16px}
+
+/* step head */
+.head{display:flex;flex-direction:column;gap:10px}
+.head h2{font-size:32px;line-height:1.25}
+.head .eyebrow{align-self:flex-start;background:var(--pfg);color:var(--chip);text-shadow:none;padding:5px 12px;border-radius:999px;letter-spacing:.04em}
+.head mark{background:var(--pmark);color:var(--chip);padding:0 .18em;border-radius:6px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.head .muted{color:var(--pmuted);font-weight:500}
+body[data-screen="s2"] .head,body[data-screen="s3"] .head,body[data-screen="s3"] .group h3{text-shadow:0 1px 2px rgba(0,0,0,.28)}
+.head mark{text-shadow:none}
+.order{background:#1B1740;color:#FFFFFF;border-radius:16px;padding:14px 16px;display:grid;gap:10px}
+.order b{font-size:18px}
+.order p{font-size:14px;line-height:1.45}
+.order .seq{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:14px;font-weight:700}
+.order .seq span{display:flex;align-items:center;gap:6px}
+.order .seq i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--hl);color:var(--on-hl);display:grid;place-items:center;font-size:13px}
+.prog{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.prog i{height:6px;border-radius:3px;background:color-mix(in srgb,var(--pfg) 28%,transparent)}
+.prog i.on{background:var(--pfg)}
+/* step and result pages: a coloured page with white cards. The cards keep the light palette in either theme. */
+body[data-screen="s1"]{--bg:oklch(.53 .17 298);--pfg:#FFFFFF;--pmuted:#EAE2FF;--pmark:var(--hl)}
+body[data-screen="s2"]{--bg:oklch(.7 .14 152);--pfg:#FFFFFF;--pmuted:#FFFFFF;--pmark:var(--hl)}
+body[data-screen="s3"]{--bg:oklch(.68 .18 50);--pfg:#FFFFFF;--pmuted:#FFFFFF;--pmark:var(--hl)}
+body[data-screen="result"]{--bg:var(--ibg);--pfg:#F6F3FF;--pmuted:var(--imuted);--pmark:var(--hl)}
+body[data-screen="s1"],body[data-screen="s2"],body[data-screen="s3"],body[data-screen="result"]{
+  --surface:#FFFFFF; --fg:#1B1740; --muted:#625F80; --line:#D9D6E8; --tl:.5; --tch:.16;
+  --c-lead:#A3217A; --c-coop:#C25A00; --c-friend:#15803D; --c-create:#1D5FBF;
+  background:var(--bg);color:var(--pfg);color-scheme:light}
+.res,.talent,details,.bar,.bars{color:var(--fg)}
+.group h3{color:var(--pfg)}
+body h3.sec{color:var(--pmuted)}
+.bars{background:var(--surface);border-radius:14px;padding:14px}
+body .ghost{border-color:color-mix(in srgb,var(--pfg) 45%,transparent)}
+body[data-screen="result"] .cta{background:var(--hl);color:var(--on-hl)}
+
+
+/* cards */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.list{display:grid;gap:10px}
+.card{position:relative;display:flex;flex-direction:column;gap:6px;text-align:left;min-width:0;
+  padding:14px;border:1.5px solid var(--line);border-radius:14px;background:var(--surface);color:var(--fg);
+  transition:transform .12s ease,background-color .12s ease}
+.card:active{transform:scale(.97)}
+.card .w{font-weight:700;font-size:18px;line-height:1.2}
+.card .d{font-size:13.5px;line-height:1.4;color:var(--muted)}
+.card[aria-pressed="true"]{background:var(--hl);color:var(--on-hl);border-color:var(--on-hl)}
+.card[aria-pressed="true"] .d{color:var(--on-hl)}
+.card .badge{position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;display:none;place-items:center;
+  background:var(--on-hl);color:var(--hl);font-size:13px;font-weight:700}
+.card[aria-pressed="true"] .badge{display:grid}
+.card .badge svg{width:15px;height:15px;stroke-width:3}
+.list .card{flex-direction:row;align-items:center;gap:14px;padding:16px}
+.list .card svg.ic{width:30px;height:30px}
+.list .card .t{display:flex;flex-direction:column;gap:2px;min-width:0;padding-right:28px}
+.list .card .w{font-size:20px}
+.list .card .d{font-size:14.5px}
+
+/* bottom bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1.5px solid var(--line);
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+.bar-in{max-width:448px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.bar .back{border:1.5px solid var(--line);background:transparent;border-radius:12px;height:48px;padding:0 14px 0 10px;display:flex;align-items:center;gap:4px;font-weight:700;flex:none}
+.bar .back svg.ic{width:20px;height:20px}
+.bar .count{flex:1;min-width:0;font-variant-numeric:tabular-nums;font-size:14px;color:var(--muted)}
+.bar .count b{font-family:var(--display);font-weight:400;font-size:26px;color:var(--fg)}
+.bar .next{border:0;border-radius:12px;height:48px;padding:0 20px;background:var(--fg);color:var(--surface);font-weight:700;flex:none}
+.bar .next:disabled{background:var(--line);color:var(--muted);cursor:default}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  background:#1B1740;color:#FFFFFF;padding:10px 16px;border-radius:999px;font-size:14px;max-width:calc(100% - 32px);text-align:center}
+
+/* result */
+.top3{display:grid;gap:12px}
+.res{background:var(--surface);border:1.5px solid var(--tc);border-radius:16px;padding:16px;display:grid;gap:12px}
+.res .row{display:flex;gap:14px;align-items:center}
+.res .rank{font-family:var(--display);font-size:40px;line-height:1;color:var(--tc);width:.7em}
+.res .ico{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;flex:none;
+  background:color-mix(in srgb,var(--tc) 14%,var(--surface));color:var(--tc)}
+.res .ico svg.ic{width:28px;height:28px}
+.res .w{font-weight:700;font-size:22px;line-height:1.2}
+.res .d{font-size:14.5px;color:var(--muted)}
+.res .meta{border-top:1.5px dashed var(--line);padding-top:12px;display:grid;gap:6px;font-size:14.5px}
+.res .meta dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:4px 12px}
+.res .meta dt{color:var(--muted)} .res .meta dd{margin:0;font-weight:700}
+.res .meta dd span{font-weight:400;color:var(--muted)}
+.tname{color:var(--tc)}
+.talent{background:color-mix(in srgb,var(--tc) 12%,var(--surface));border-radius:20px;padding:22px 18px;display:grid;gap:16px}
+.talent h2{font-size:44px;color:var(--tc)}
+.bars{display:grid;gap:8px}
+.bars .b{display:grid;grid-template-columns:4.2em 1fr 1.5em;gap:8px;align-items:center;font-size:14px}
+.bars .track{height:12px;border-radius:6px;background:color-mix(in srgb,var(--tc) 18%,var(--surface))}
+.bars .fill{height:100%;border-radius:6px;background:var(--tc)}
+.bars .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.qa{display:grid;gap:12px}
+.qa div{display:grid;gap:2px}
+.qa div.chips{display:flex;gap:6px}
+.qa dt,.qa .q{font-weight:700;font-size:14px;color:var(--tc)}
+.jobs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.jobs div{display:flex;flex-direction:column;gap:2px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.jobs b{font-size:14.5px;line-height:1.3}
+.jobs span{font-size:12.5px;line-height:1.35;color:var(--muted)}
+.catch{font-weight:700;font-size:17px}
+.rec{display:grid;gap:10px}
+.rec section{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:8px}
+.rec h4{margin:0;font-size:13px;font-weight:700;color:var(--tc);display:flex;flex-wrap:wrap;align-items:baseline;gap:6px}
+.rec h4 small{font-size:12px;font-weight:400;color:var(--muted)}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.rec ul[hidden]{display:none}
+.tabs button{border:1.5px solid var(--line);background:transparent;border-radius:999px;padding:8px 11px;font-size:13.5px;font-weight:700;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--tc);border-color:var(--tc);color:var(--surface)}
+.rec .ask{font-size:13px;color:var(--muted);border-top:1.5px dashed var(--line);padding-top:8px}
+.rec ul{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.rec li{display:grid;gap:1px;min-width:0}
+.rec li b{font-size:15px;line-height:1.3}
+.rec li span{font-size:13px;line-height:1.4;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{font-size:13.5px;padding:5px 10px;border-radius:999px;background:var(--surface);border:1.5px solid var(--line)}
+details{background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:0 16px}
+summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0;font-weight:700;color:var(--tc);cursor:pointer}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-size:20px;color:var(--muted)}
+details[open] summary::after{content:"–"}
+details .body{display:grid;gap:14px;padding-bottom:16px}
+.others{display:grid;gap:10px}
+.actions{display:grid;gap:10px}
+.ghost{width:100%;border:1.5px solid var(--line);background:transparent;border-radius:14px;padding:14px;font-weight:700}
+h3.sec{font-size:15px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+@media (prefers-reduced-motion:reduce){.card{transition:none}}
+</style>
+
+<div id="app"></div>
+<div id="bar" class="bar" hidden></div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+const ICONS = {"정열":"<path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z\" />","활력":"<path d=\"M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z\" />","에너지":"<path d=\"M15 7h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2\" /><path d=\"M6 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1\" /><path d=\"m11 7-3 5h4l-3 5\" /><line x1=\"22\" x2=\"22\" y1=\"11\" y2=\"13\" />","리더십":"<path d=\"M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z\" /><line x1=\"4\" x2=\"4\" y1=\"22\" y2=\"15\" />","주관":"<path d=\"m16.24 7.76-1.804 5.411a2 2 0 0 1-1.265 1.265L7.76 16.24l1.804-5.411a2 2 0 0 1 1.265-1.265z\" /><circle cx=\"12\" cy=\"12\" r=\"10\" />","추진":"<path d=\"M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z\" /><path d=\"m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z\" /><path d=\"M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0\" /><path d=\"M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5\" />","침착":"<path d=\"M12 22V8\" /><path d=\"M5 12H2a10 10 0 0 0 20 0h-3\" /><circle cx=\"12\" cy=\"5\" r=\"3\" />","계산":"<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\" /><line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\" /><line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\" /><path d=\"M16 10h.01\" /><path d=\"M12 10h.01\" /><path d=\"M8 10h.01\" /><path d=\"M12 14h.01\" /><path d=\"M8 14h.01\" /><path d=\"M12 18h.01\" /><path d=\"M8 18h.01\" />","조심":"<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\" />","인내":"<path d=\"M5 22h14\" /><path d=\"M5 2h14\" /><path d=\"M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22\" /><path d=\"M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2\" />","극복":"<path d=\"m8 3 4 8 5-5 5 15H2L8 3z\" />","신념":"<path d=\"M6 3h12l4 6-10 13L2 9Z\" /><path d=\"M11 3 8 9l4 13 4-13-3-6\" /><path d=\"M2 9h20\" />","결정":"<path d=\"m14.5 12.5-8 8a2.119 2.119 0 1 1-3-3l8-8\" /><path d=\"m16 16 6-6\" /><path d=\"m8 8 6-6\" /><path d=\"m9 7 8 8\" /><path d=\"m21 11-8-8\" />","냉정":"<line x1=\"2\" x2=\"22\" y1=\"12\" y2=\"12\" /><line x1=\"12\" x2=\"12\" y1=\"2\" y2=\"22\" /><path d=\"m20 16-4-4 4-4\" /><path d=\"m4 8 4 4-4 4\" /><path d=\"m16 4-4 4-4-4\" /><path d=\"m8 20 4-4 4 4\" />","통제":"<line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\" /><line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\" /><line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\" /><line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\" /><line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\" /><line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\" /><line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\" /><line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\" /><line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\" />","신속":"<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\" /><line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\" /><circle cx=\"12\" cy=\"14\" r=\"8\" />","유연":"<path d=\"M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\" /><path d=\"M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\" /><path d=\"M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\" />","반응":"<path d=\"M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2\" />","교감":"<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" /><path d=\"M12 5 9.04 7.96a2.17 2.17 0 0 0 0 3.08c.82.82 2.13.85 3 .07l2.07-1.9a2.82 2.82 0 0 1 3.79 0l2.96 2.66\" /><path d=\"m18 15-2-2\" /><path d=\"m15 18-2-2\" />","협상":"<path d=\"m11 17 2 2a1 1 0 1 0 3-3\" /><path d=\"m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4\" /><path d=\"m21 3 1 11h-2\" /><path d=\"M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3\" /><path d=\"M3 4h8\" />","조화":"<path d=\"M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z\" />","관리":"<rect width=\"8\" height=\"4\" x=\"8\" y=\"2\" rx=\"1\" ry=\"1\" /><path d=\"M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2\" /><path d=\"m9 14 2 2 4-4\" />","균형":"<path d=\"m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\" /><path d=\"m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z\" /><path d=\"M7 21h10\" /><path d=\"M12 3v18\" /><path d=\"M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2\" />","반듯함":"<path d=\"M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z\" /><path d=\"m14.5 12.5 2-2\" /><path d=\"m11.5 9.5 2-2\" /><path d=\"m8.5 6.5 2-2\" /><path d=\"m17.5 15.5 2-2\" />","객관적":"<path d=\"M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z\" /><circle cx=\"12\" cy=\"12\" r=\"3\" />","집중":"<circle cx=\"12\" cy=\"12\" r=\"10\" /><circle cx=\"12\" cy=\"12\" r=\"6\" /><circle cx=\"12\" cy=\"12\" r=\"2\" />","공정":"<line x1=\"5\" x2=\"19\" y1=\"9\" y2=\"9\" /><line x1=\"5\" x2=\"19\" y1=\"15\" y2=\"15\" />","지혜":"<path d=\"M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z\" /><path d=\"M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z\" /><path d=\"M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4\" /><path d=\"M17.599 6.5a3 3 0 0 0 .399-1.375\" /><path d=\"M6.003 5.125A3 3 0 0 0 6.401 6.5\" /><path d=\"M3.477 10.896a4 4 0 0 1 .585-.396\" /><path d=\"M19.938 10.5a4 4 0 0 1 .585.396\" /><path d=\"M6 18a4 4 0 0 1-1.967-.516\" /><path d=\"M19.967 17.484A4 4 0 0 1 18 18\" />","통찰":"<path d=\"m10.065 12.493-6.18 1.318a.934.934 0 0 1-1.108-.702l-.537-2.15a1.07 1.07 0 0 1 .691-1.265l13.504-4.44\" /><path d=\"m13.56 11.747 4.332-.924\" /><path d=\"m16 21-3.105-6.21\" /><path d=\"M16.485 5.94a2 2 0 0 1 1.455-2.425l1.09-.272a1 1 0 0 1 1.212.727l1.515 6.06a1 1 0 0 1-.727 1.213l-1.09.272a2 2 0 0 1-2.425-1.455z\" /><path d=\"m6.158 8.633 1.114 4.456\" /><path d=\"m8 21 3.105-6.21\" /><circle cx=\"12\" cy=\"13\" r=\"2\" />","지식":"<path d=\"M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z\" /><path d=\"M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z\" />","재치":"<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\" /><path d=\"M20 3v4\" /><path d=\"M22 5h-4\" /><path d=\"M4 17v2\" /><path d=\"M5 18H3\" />","유머":"<circle cx=\"12\" cy=\"12\" r=\"10\" /><path d=\"M18 13a6 6 0 0 1-6 5 6 6 0 0 1-6-5h12Z\" /><line x1=\"9\" x2=\"9.01\" y1=\"9\" y2=\"9\" /><line x1=\"15\" x2=\"15.01\" y1=\"9\" y2=\"9\" />","표현":"<path d=\"m3 11 18-5v12L3 14v-3z\" /><path d=\"M11.6 16.8a3 3 0 1 1-5.8-1.6\" />","희생":"<circle cx=\"12\" cy=\"12\" r=\"10\" /><path d=\"m4.93 4.93 4.24 4.24\" /><path d=\"m14.83 9.17 4.24-4.24\" /><path d=\"m14.83 14.83 4.24 4.24\" /><path d=\"m9.17 14.83-4.24 4.24\" /><circle cx=\"12\" cy=\"12\" r=\"4\" />","기여":"<rect x=\"3\" y=\"8\" width=\"18\" height=\"4\" rx=\"1\" /><path d=\"M12 8v13\" /><path d=\"M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7\" /><path d=\"M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5\" />","겸손":"<path d=\"M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z\" /><path d=\"M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12\" />","믿음":"<path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\" /><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\" />","존중":"<path d=\"m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526\" /><circle cx=\"12\" cy=\"8\" r=\"6\" />","감사":"<path d=\"M7 10v12\" /><path d=\"M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z\" />","감성":"<path d=\"M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z\" />","위로":"<path d=\"M10 2v2\" /><path d=\"M14 2v2\" /><path d=\"M16 8a1 1 0 0 1 1 1v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1h14a4 4 0 1 1 0 8h-1\" /><path d=\"M6 2v2\" />","사랑":"<path d=\"M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z\" />","배려":"<path d=\"M22 12a10.06 10.06 1 0 0-20 0Z\" /><path d=\"M12 12v8a2 2 0 0 0 4 0\" /><path d=\"M12 2v1\" />","호의적":"<circle cx=\"12\" cy=\"12\" r=\"10\" /><path d=\"M8 14s1.5 2 4 2 4-2 4-2\" /><line x1=\"9\" x2=\"9.01\" y1=\"9\" y2=\"9\" /><line x1=\"15\" x2=\"15.01\" y1=\"9\" y2=\"9\" />","선행":"<path d=\"M11 12h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 14\" /><path d=\"m7 18 1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-4.2 3.9\" /><path d=\"m2 13 6 6\" />","끈기":"<path d=\"M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4Zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4Z\" />","지구력":"<path d=\"M14.4 14.4 9.6 9.6\" /><path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\" /><path d=\"m21.5 21.5-1.4-1.4\" /><path d=\"M3.9 3.9 2.5 2.5\" /><path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\" />","유지":"<path d=\"M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8\" /><path d=\"M21 3v5h-5\" /><path d=\"M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16\" /><path d=\"M8 16H3v5\" />","연구":"<path d=\"M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2\" /><path d=\"M8.5 2h7\" /><path d=\"M7 16h10\" />","파악":"<circle cx=\"11\" cy=\"11\" r=\"8\" /><path d=\"m21 21-4.3-4.3\" />","조작":"<path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z\" />","창의":"<path d=\"m14.622 17.897-10.68-2.913\" /><path d=\"M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z\" /><path d=\"M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15\" />","기발":"<path d=\"M15 4V2\" /><path d=\"M15 16v-2\" /><path d=\"M8 9h2\" /><path d=\"M20 9h2\" /><path d=\"M17.8 11.8 19 13\" /><path d=\"M15 9h.01\" /><path d=\"M17.8 6.2 19 5\" /><path d=\"m3 21 9-9\" /><path d=\"M12.2 6.2 11 5\" />","발상":"<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\" /><path d=\"M9 18h6\" /><path d=\"M10 22h4\" />","자유":"<path d=\"M16 7h.01\" /><path d=\"M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20\" /><path d=\"m20 7 2 .5-2 .5\" /><path d=\"M10 18v3\" /><path d=\"M14 17.75V21\" /><path d=\"M7 18a6 6 0 0 0 3.84-10.61\" />","개성":"<path d=\"M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4\" /><path d=\"M14 13.12c0 2.38 0 6.38-1 8.88\" /><path d=\"M17.29 21.02c.12-.6.43-2.3.5-3.02\" /><path d=\"M2 12a10 10 0 0 1 18-6\" /><path d=\"M2 16h.01\" /><path d=\"M21.8 16c.2-2 .131-5.354 0-6\" /><path d=\"M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2\" /><path d=\"M8.65 22c.21-.66.45-1.32.57-2\" /><path d=\"M9 6.8a6 6 0 0 1 9 5.2v2\" />","창조":"<path d=\"M8.3 10a.7.7 0 0 1-.626-1.079L11.4 3a.7.7 0 0 1 1.198-.043L16.3 8.9a.7.7 0 0 1-.572 1.1Z\" /><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\" /><circle cx=\"17.5\" cy=\"17.5\" r=\"3.5\" />","다양성":"<circle cx=\"13.5\" cy=\"6.5\" r=\".5\" fill=\"currentColor\" /><circle cx=\"17.5\" cy=\"10.5\" r=\".5\" fill=\"currentColor\" /><circle cx=\"8.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\" /><circle cx=\"6.5\" cy=\"12.5\" r=\".5\" fill=\"currentColor\" /><path d=\"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z\" />","포용":"<path d=\"M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2\" /><circle cx=\"9\" cy=\"7\" r=\"4\" /><path d=\"M22 21v-2a4 4 0 0 0-3-3.87\" /><path d=\"M16 3.13a4 4 0 0 1 0 7.75\" />","호기심":"<circle cx=\"12\" cy=\"12\" r=\"10\" /><path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\" /><path d=\"M12 17h.01\" />","_check":"<path d=\"M20 6 9 17l-5-5\" />","_back":"<path d=\"m12 19-7-7 7-7\" /><path d=\"M19 12H5\" />"};
+const TALENTS = {
+  lead:{name:'리더형 인재', short:'리더형', catch:'목표가 생기면 일단 움직이는 사람',
+    qa:[['이런 게 강점이에요','결정이 빠르고, 말한 건 행동으로 옮겨요. 압박이 와도 침착하게 결과를 만들어 내요.'],
+        ['팀에서는 이런 역할','돌려 말하지 않고 핵심부터 짚어요. 조별 과제에서 역할을 나누고 일정을 끌고 가는 쪽이에요.'],
+        ['이것만 챙기면 더 좋아요','속도가 다른 친구에게는 밀어붙이는 걸로 보일 수 있어요. 정하기 전에 한 번만 물어봐 주세요.']],
+    jobs:[["스마트팜 구축가", "ICT로 똑똑한 농장을 지어요"], ["농업 드론 방제사", "드론으로 방제하고 농장을 살펴요"], ["라이브커머스 PD", "실시간 판매 방송을 기획하고 지휘해요"], ["육군 부사관", "분대를 이끄는 직업군인"], ["팝업스토어 기획자", "며칠만 여는 매장을 통째로 기획해요"]],
+    inds:[["모빌리티·로봇", [["현대자동차", "전기차와 로봇까지 만드는 자동차 회사"], ["대동", "스스로 달리는 AI 트랙터"], ["레인보우로보틱스", "사람과 함께 일하는 로봇"]]], ["방위·우주", [["한화에어로스페이스", "K9 자주포와 누리호 엔진"], ["KAI", "전투기 KF-21을 만들어요"], ["LIG넥스원", "미사일 방어 무기 천궁"]]], ["쇼핑·유통", [["올리브영", "10대가 화장품 살 때 가장 많이 찾는 곳"], ["다이소", "뭐든 5천 원 이하 생활용품점"], ["무신사", "패션 브랜드가 모인 쇼핑 앱"]]]]},
+  coop:{name:'협력형 인재', short:'협력형', catch:'확실해야 움직이는, 믿고 맡기는 사람',
+    qa:[['이런 게 강점이에요','자료를 모으고 따져 보는 걸 잘해요. 실수와 위험을 미리 찾아내고, 맡은 일은 정확하게 끝내요.'],
+        ['팀에서는 이런 역할','이유가 납득되면 누구보다 확실하게 해내요. 팀에서 검토와 마무리를 책임지는 쪽이에요.'],
+        ['이것만 챙기면 더 좋아요','완벽하게 준비하려다 시작이 늦어질 수 있어요. 70%만 준비돼도 일단 해 보세요.']],
+    jobs:[["정밀농업 기술자", "물과 비료를 딱 필요한 만큼만"], ["동물 검역관", "공항·항만에서 동물 질병을 막아요"], ["그로스 해커", "데이터로 앱 이용자를 늘리는 방법을 찾아요"], ["AI 데이터 라벨러", "AI가 배울 사진과 글에 정답을 달아 줘요"], ["데이터 분석가", "숫자에서 답을 찾아내요"]],
+    inds:[["AI·공부 앱", [["뤼튼", "무엇이든 물어보는 AI 앱"], ["콴다", "문제를 찍으면 풀이를 알려 줘요"], ["네이버", "검색·지도·웹툰과 AI 서비스"]]], ["금융 앱", [["토스", "송금·은행·증권을 앱 하나로"], ["카카오뱅크", "지점 없는 모바일 은행"], ["퍼핀", "10대를 위한 용돈 카드와 앱"]]], ["스마트농업", [["엔씽", "컨테이너 안에 수직농장을 지어요"], ["메타파머스", "AI 로봇이 딸기를 따요"], ["아이오크롭스", "AI가 온실을 원격으로 운영해요"]]]]},
+  friend:{name:'친화형 인재', short:'친화형', catch:'사람을 먼저 보는, 분위기를 지키는 사람',
+    qa:[['이런 게 강점이에요','잘 들어 주고 잘 살펴요. 직접 겪고 관찰하면서 배우고, 곁에 있는 사람을 편하게 해 줘요.'],
+        ['팀에서는 이런 역할','의견이 갈릴 때 중간에서 맞춰 줘요. 팀이 끝까지 함께 가게 만드는 쪽이에요.'],
+        ['이것만 챙기면 더 좋아요','맞춰 주다가 내 의견을 삼킬 때가 있어요. 내 생각도 소리 내어 말해 보세요.']],
+    jobs:[["동물보건사", "동물병원에서 아픈 동물을 간호해요"], ["팬 커뮤니티 매니저", "아티스트와 팬 사이를 이어 줘요"], ["퍼스널 컬러 컨설턴트", "나에게 어울리는 색을 찾아 줘요"], ["아쿠아리스트", "수족관 생물을 돌보고 전시해요"], ["원예치료사", "식물 가꾸기로 마음을 돌봐요"]],
+    inds:[["반려동물", [["핏펫", "반려동물 건강검진과 영양제"], ["펫프렌즈", "반려동물 용품을 빠르게 배송해요"], ["에이아이포펫", "사진 한 장으로 건강 체크"]]], ["동네·생활", [["당근", "우리 동네 중고거래와 이웃 소식"], ["배달의민족", "동네 음식 배달 앱"], ["오늘의집", "집 꾸미기 정보와 쇼핑"]]], ["여행·여가", [["놀(NOL)", "야놀자의 새 이름. 숙소·공연·여행 예약"], ["마이리얼트립", "항공·투어를 한 번에"], ["에버랜드", "놀이기구와 동물원이 있는 테마파크"]]]]},
+  create:{name:'창조형 인재', short:'창조형', catch:'새로운 게 보이면 눈이 반짝이는 사람',
+    qa:[['이런 게 강점이에요','아이디어가 많고 변화에 빨리 적응해요. 서로 다른 것을 섞어서 새로운 걸 만들어 내요.'],
+        ['팀에서는 이런 역할','분위기를 띄우고 사람들을 설득해요. 팀에서 “이건 어때?”를 가장 먼저 꺼내는 쪽이에요.'],
+        ['이것만 챙기면 더 좋아요','시작은 빠른데 마무리가 약할 수 있어요. 마감을 정하거나 끝까지 챙겨 줄 짝을 두세요.']],
+    jobs:[["식품융합 엔지니어", "기술을 섞어 새 식재료를 개발해요"], ["플로리스트", "꽃과 식물로 공간을 꾸며요"], ["드론쇼 디자이너", "드론 수백 대로 밤하늘에 그림을 그려요"], ["푸드 스타일리스트", "음식을 더 맛있어 보이게"], ["콘텐츠 크리에이터", "영상으로 이야기를 만들어요"]],
+    inds:[["게임·웹툰", [["크래프톤", "배틀그라운드를 만든 게임사"], ["넥슨", "메이플스토리·FC 온라인"], ["네이버웹툰", "전 세계가 보는 웹툰 플랫폼"]]], ["간식·카페", [["요아정", "토핑을 골라 먹는 요거트 아이스크림"], ["메가MGC커피", "크고 저렴한 테이크아웃 카페"], ["CU", "신상 간식이 쏟아지는 편의점"]]], ["엔터·패션", [["하이브", "BTS·세븐틴의 소속사"], ["젠틀몬스터", "매장이 전시장 같은 안경 브랜드"], ["에이블리", "취향을 추천해 주는 패션 앱"]]]]}
+};
+const TORDER = ['lead','coop','friend','create'];
+const TYPES = [
+ ['슈퍼파워형','lead',[['정열','좋아하는 일에 뜨겁게 몰입해요'],['활력','주변까지 생기 있게 만들어요'],['에너지','지치지 않고 끝까지 움직여요']]],
+ ['나를따르라형','lead',[['리더십','사람들을 이끌고 방향을 잡아요'],['주관','내 생각과 기준이 뚜렷해요'],['추진','정한 일은 바로 밀고 나가요']]],
+ ['자기통제형','lead',[['침착','급한 상황에서도 흔들리지 않아요'],['계산','득과 실을 따져 보고 움직여요'],['조심','실수하지 않게 미리 살펴요']]],
+ ['파란만장형','lead',[['인내','힘들어도 참고 기다릴 줄 알아요'],['극복','어려움을 딛고 다시 일어나요'],['신념','옳다고 믿는 것을 지켜요']]],
+ ['야심가형','lead',[['결정','망설이지 않고 선택을 내려요'],['냉정','감정에 휩쓸리지 않고 판단해요'],['통제','상황과 나 자신을 잘 다스려요']]],
+ ['번개스피드형','coop',[['신속','남들보다 빠르게 해내요'],['유연','상황에 맞게 방법을 바꿔요'],['반응','변화를 금방 알아채고 움직여요']]],
+ ['무적적응형','coop',[['교감','상대의 마음을 잘 읽고 통해요'],['협상','서로 만족할 지점을 찾아내요'],['조화','여러 사람과 잘 어우러져요']]],
+ ['칼날품위형','coop',[['관리','일과 물건을 빈틈없이 챙겨요'],['균형','한쪽으로 치우치지 않아요'],['반듯함','예의 바르고 흐트러짐이 없어요']]],
+ ['오차제로형','coop',[['객관적','사실을 근거로 바라봐요'],['집중','한 가지에 깊이 몰두해요'],['공정','누구에게나 같은 기준을 적용해요']]],
+ ['솔로몬형','coop',[['지혜','문제를 슬기롭게 풀어요'],['통찰','겉모습 너머 핵심을 꿰뚫어 봐요'],['지식','아는 것이 많고 배우기를 즐겨요']]],
+ ['천진난만형','friend',[['재치','순간순간 센스 있게 대처해요'],['유머','사람들을 웃게 만들어요'],['표현','생각과 감정을 잘 드러내요']]],
+ ['따뜻한가슴형','friend',[['희생','다른 사람을 위해 기꺼이 양보해요'],['기여','모두에게 도움이 되는 일을 해요'],['겸손','나를 내세우지 않고 낮출 줄 알아요']]],
+ ['무한땡큐형','friend',[['믿음','사람을 믿고, 믿음을 줘요'],['존중','상대의 생각을 귀하게 여겨요'],['감사','작은 것에도 고마움을 느껴요']]],
+ ['낭만파형','friend',[['감성','분위기와 감정을 섬세하게 느껴요'],['위로','힘든 친구의 마음을 다독여요'],['사랑','주변 사람을 아끼고 챙겨요']]],
+ ['친절서비스형','friend',[['배려','상대 입장을 먼저 생각해요'],['호의적','누구에게나 밝고 친절해요'],['선행','착한 일을 먼저 실천해요']]],
+ ['대기만성형','create',[['끈기','될 때까지 포기하지 않아요'],['지구력','오랜 시간 꾸준히 버텨요'],['유지','시작한 것을 꾸준히 이어가요']]],
+ ['만능기술자형','create',[['연구','궁금한 것을 깊이 파고들어요'],['파악','원리와 구조를 빨리 이해해요'],['조작','도구와 기기를 능숙하게 다뤄요']]],
+ ['독창적인형','create',[['창의','새로운 것을 생각해 내요'],['기발','남들이 못 떠올린 아이디어를 내요'],['발상','생각을 다른 방향으로 뒤집어요']]],
+ ['자유영혼형','create',[['자유','틀에 갇히지 않고 내 방식대로 해요'],['개성','나만의 색깔이 뚜렷해요'],['창조','없던 것을 직접 만들어 내요']]],
+ ['다홍치마형','create',[['다양성','여러 분야에 두루 관심이 많아요'],['포용','나와 다른 사람도 받아들여요'],['호기심','새로운 것이 늘 궁금해요']]]
+];
+const HUES = [300,318,336,352,12, 28,46,64,84,102, 122,136,148,160,172, 278,258,240,218,195];
+const TAGS = ['뜨거운 에너지로 주변까지 움직여요','앞장서서 방향을 정하고 이끌어요','차분하게 따져 보고 신중하게 움직여요','어려움을 견디고 끝내 이겨내요','큰 목표를 세우고 과감하게 결정해요',
+ '누구보다 빠르고 유연하게 대응해요','누구와도 금방 어울리고 맞춰 가요','빈틈없이 관리하고 늘 반듯해요','정확하고 공정하게 판단해요','깊이 생각하고 슬기롭게 해결해요',
+ '밝은 웃음으로 분위기를 살려요','남을 먼저 돕고 나를 낮춰요','사람을 믿고 고마움을 표현해요','감성이 풍부하고 마음을 다독여요','먼저 배려하고 친절을 베풀어요',
+ '꾸준히 버텨서 결국 해내요','깊이 파고들어 이해하고 능숙하게 다뤄요','기발한 아이디어가 샘솟아요','틀에 얽매이지 않고 나답게 만들어요','다양한 것에 관심이 많고 두루 품어요'];
+const S = [];
+TYPES.forEach(([type,talent,kws],ti) => kws.forEach(([w,d]) => S.push({w,d,type,talent,ti,sib:kws.map(k=>k[0])})));
+
+const LIMIT = {s1:10, s2:5, s3:3};
+const KEY = 'sf-state-v2';
+let st = {step:'intro', p10:[], p5:[], p3:[]};
+let resetArmed = false, toastTimer;
+
+function shuffle(n){const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+function load(){try{const v=JSON.parse(localStorage.getItem(KEY));if(v&&v.step&&Array.isArray(v.p10)&&Array.isArray(v.p5)&&Array.isArray(v.p3))st=v}catch(e){}}
+const ic = k => `<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${ICONS[k]||'<circle cx="12" cy="12" r="8"/>'}</svg>`;
+const $ = id => document.getElementById(id);
+
+function picks(){return st.step==='s1'?st.p10:st.step==='s2'?st.p5:st.p3}
+function tcard(i){
+  const [name,,kws]=TYPES[i], on=picks().includes(i);
+  return `<button class="tcard hue" style="--h:${HUES[i]}" data-pick="${i}" aria-pressed="${on}"><span class="tn">${name}</span><span class="tg">${TAGS[i]}</span><span class="kw">${kws.map(k=>`<span>${ic(k[0])}${k[0]}</span>`).join('')}</span><span class="badge"><svg class="ic" viewBox="0 0 24 24">${ICONS._check}</svg></span></button>`;
+}
+function card(i, ranked){
+  const s=S[i], p=picks(), on=p.includes(i);
+  const badge = ranked ? (on?p.indexOf(i)+1:'') : `<svg class="ic" viewBox="0 0 24 24">${ICONS._check}</svg>`;
+  return `<button class="card" data-pick="${i}" aria-pressed="${on}">${ic(s.w)}<span class="t" style="display:contents"><span class="w">${s.w}</span><span class="d">${s.d}</span></span><span class="badge">${badge}</span></button>`;
+}
+function rowCard(i, ranked){
+  const s=S[i], p=picks(), on=p.includes(i);
+  const badge = ranked ? (on?p.indexOf(i)+1:'') : `<svg class="ic" viewBox="0 0 24 24">${ICONS._check}</svg>`;
+  return `<button class="card" data-pick="${i}" aria-pressed="${on}">${ic(s.w)}<span class="t"><span class="w">${s.w}</span><span class="d">${s.d}</span></span><span class="badge">${badge}</span></button>`;
+}
+
+function talentBody(t){
+  const T=TALENTS[t];
+  return `<p class="catch">${T.catch}</p>
+  <div class="qa">${T.qa.map(([q,a])=>`<div><span class="q">${q}</span><span>${a}</span></div>`).join('')}</div>
+  <div class="rec">
+    <section><h4>이런 직업, 어때요?<small>낯설지만 실제로 있는 직업이에요</small></h4><ul>${T.jobs.map(([n,d])=>`<li><b>${n}</b><span>${d}</span></li>`).join('')}</ul></section>
+    <section class="cos"><h4>관심 가져 볼 기업<small>끌리는 산업을 눌러 보세요</small></h4>
+      <div class="tabs" role="tablist">${T.inds.map(([n],i)=>`<button role="tab" data-ind="${i}" aria-selected="${i===0}">${n}</button>`).join('')}</div>
+      ${T.inds.map(([n,list],i)=>`<ul data-panel="${i}" ${i?'hidden':''}>${list.map(([c,d])=>`<li><b>${c}</b><span>${d}</span></li>`).join('')}</ul>`).join('')}
+      <p class="ask">이 기업, 어떤 점이 불편하거나 아쉬울까요?</p>
+    </section>
+  </div>`;
+}
+function mainTalent(){
+  const sc={lead:0,coop:0,friend:0,create:0}, c10={lead:0,coop:0,friend:0,create:0};
+  st.p3.forEach((i,r)=>sc[S[i].talent]+=3-r);
+  st.p10.forEach(i=>c10[TYPES[i][1]]++);
+  const first=S[st.p3[0]].talent;
+  const best=TORDER.slice().sort((a,b)=>sc[b]-sc[a]||c10[b]-c10[a]||(b===first)-(a===first))[0];
+  return {best,c10,n:st.p3.filter(i=>S[i].talent===best).length};
+}
+
+function render(){
+  const app=$('app'), bar=$('bar'); let h='';
+  document.body.dataset.screen=st.step;
+  if(st.step==='intro'){
+    bar.hidden=true;
+    const chip=k=>{const x=S.find(v=>v.w===k);return `<span class="chip" style="--h:${HUES[x.ti]}">${ic(k)}${k}</span>`};
+    const rowA=['정열','통찰','유머','끈기','배려','창의','리더십','공정','감성','호기심'].map(chip).join('');
+    const rowB=['추진','집중','재치','연구','위로','개성','극복','교감','감사','발상'].map(chip).join('');
+    const ex=k=>st.ex===k;
+    h=`<div class="intro">
+    <span class="pill">STRENGTH FINDER</span>
+    <h1>나의 <em>강점</em> 찾기</h1>
+    <p class="lede">20가지 유형, 60개의 강점 중에서<br><b>진짜 내 것 3개</b>를 골라내요.</p>
+    <div class="drift" aria-hidden="true"><div class="row">${rowA}${rowA}</div><div class="row rev">${rowB}${rowB}</div></div>
+    <div class="vs">
+      <button class="weak" data-act="ex" data-k="a" aria-expanded="${ex('a')}"><span class="tag">누구나 있는 것</span><span class="k">장점</span><span class="m">좋거나, 잘하거나, 긍정적인 점</span>${ex('a')?'<span class="ex">예) “나는 친절한 편이야.”</span>':'<span class="tap">눌러서 예시 보기</span>'}</button>
+      <button class="strong" data-act="ex" data-k="b" aria-expanded="${ex('b')}"><span class="tag">오늘 찾을 것</span><span class="k">강점</span><span class="m">남보다 우세하거나 더 뛰어난 점</span>${ex('b')?'<span class="ex">예) “친구 고민은 우리 반에서 내가 제일 잘 들어 줘.”</span>':'<span class="tap">눌러서 예시 보기</span>'}</button>
+    </div>
+    <section class="how"><h2>이렇게 좁혀 가요</h2>
+      <div class="funnel">
+        <div><span class="s">STEP 1</span><span class="n">10</span><span class="t">어울리는 강점유형 고르기</span></div>
+        <div><span class="s">STEP 2</span><span class="n">5</span><span class="t">더 나다운 유형 선택하기</span></div>
+        <div><span class="s">STEP 3</span><span class="n">3</span><span class="t">최종 강점을 순위대로</span></div>
+      </div>
+    </section>
+    <p class="note">정답은 없어요. 되고 싶은 모습 말고, 지금의 나와 가까운 것을 고르세요.</p>
+    <button class="cta" data-act="start">시작하기 →</button>
+    </div>`;
+  } else if(st.step==='result'){
+    bar.hidden=true;
+    const {best,c10,n}=mainTalent(), T=TALENTS[best];
+    const why = n>=2 ? `TOP 3 가운데 ${n}개가 ${T.short}에 속해요.` : `1순위로 고른 ‘${S[st.p3[0]].w}’ 강점이 ${T.short}에 속해요.`;
+    h=`<div class="head"><p class="eyebrow">RESULT</p><h2>나의 강점 <mark>TOP 3</mark></h2></div>
+    <div class="top3">${st.p3.map((i,r)=>{const s=S[i];return `<article class="res" data-t="${s.talent}">
+      <div class="row"><span class="rank">${r+1}</span><span class="ico">${ic(s.w)}</span><div><div class="w">${s.w}</div><div class="d">${s.d}</div></div></div>
+      <div class="meta"><dl><dt>강점유형</dt><dd>${s.type} <span>${s.sib.join(' · ')}</span></dd><dt>인재유형</dt><dd class="tname">${TALENTS[s.talent].name}</dd></dl></div>
+    </article>`}).join('')}</div>
+    <section class="talent" data-t="${best}">
+      <div><p class="eyebrow">나의 인재유형</p><h2>${T.name}</h2><p class="muted">${why}</p></div>
+      ${talentBody(best)}
+    </section>
+    <h3 class="sec">처음 고른 강점유형 10개는 어디에 모였을까?</h3>
+    <div class="bars">${TORDER.map(t=>`<div class="b" data-t="${t}"><span>${TALENTS[t].short}</span><div class="track"><div class="fill" style="width:${c10[t]*10}%"></div></div><span class="n">${c10[t]}</span></div>`).join('')}</div>
+    <h3 class="sec">다른 인재유형도 살펴보기</h3>
+    <div class="others">${TORDER.filter(t=>t!==best).map(t=>`<details data-t="${t}"><summary>${TALENTS[t].name}</summary><div class="body">${talentBody(t)}</div></details>`).join('')}</div>
+    <div class="actions">
+      <button class="cta" data-act="copy" id="copyBtn">결과 복사하기</button>
+      <button class="ghost" data-act="redo">이전 단계로 돌아가 강점 다시 고르기</button>
+      <button class="ghost" data-act="reset" id="resetBtn">처음부터 다시 하기</button>
+    </div>`;
+  } else {
+    const lim=LIMIT[st.step], p=picks(), n={s1:1,s2:2,s3:3}[st.step];
+    const title={s1:'나에게 어울리는 강점유형 <mark>10개</mark>',s2:'더 나다운 강점유형 <mark>5개</mark>',s3:'최종 강점 3개, <mark>순위대로</mark>'}[st.step];
+    const sub={s1:'유형마다 강점 3개가 묶여 있어요. 유형 이름이 어렵다면 강점 3개를 보고 고르세요.',s2:'고른 10개 중에서 “이건 정말 나다” 싶은 유형을 선택해요.',s3:'선택한 유형의 강점 15개 중에서 골라요.'}[st.step];
+    h=`<div class="head"><div class="prog" aria-hidden="true">${[1,2,3].map(k=>`<i class="${k<=n?'on':''}"></i>`).join('')}</div><p class="eyebrow">${n}단계 / 3단계</p><h2>${title}</h2><p class="muted">${sub}</p></div>`;
+    if(st.step==='s3') h+=`<div class="order"><b>누른 순서가 곧 순위예요</b><div class="seq"><span><i>1</i>가장 나다운 강점</span><span><i>2</i>그다음</span><span><i>3</i>그다음</span></div><p>아무거나 3개가 아니라, 1순위부터 차례로 눌러 주세요. 순서를 바꾸려면 다시 눌러 취소하면 돼요.</p></div>`;
+    const asc=a=>a.slice().sort((x,y)=>x-y);
+    if(st.step==='s1') h+=`<div class="list">${TYPES.map((_,i)=>tcard(i)).join('')}</div>`;
+    else if(st.step==='s2') h+=`<div class="list">${asc(st.p10).map(tcard).join('')}</div>`;
+    else h+=asc(st.p5).map(ti=>`<section class="group hue" style="--h:${HUES[ti]}"><h3>${TYPES[ti][0]}</h3><div class="list">${S.map((x,i)=>x.ti===ti?rowCard(i,true):'').join('')}</div></section>`).join('');
+    bar.hidden=false;
+    bar.innerHTML=`<div class="bar-in"><button class="back" data-act="back"><svg class="ic" viewBox="0 0 24 24">${ICONS._back}</svg>이전</button>
+      <div class="count">${st.step==='s3'?(p.length<3?`<b>${p.length+1}순위</b>를 눌러 주세요`:`<b>3</b> / 3개 선택 완료`):`<b>${p.length}</b> / ${lim}개 선택`}</div>
+      <button class="next" data-act="next" ${p.length===lim?'':'disabled'}>${st.step==='s3'?'결과 보기':'다음'}</button></div>`;
+  }
+  app.innerHTML=h;
+}
+
+let actx;
+function tick(on){ // light, clear UI click: a very short pure tone that drops in pitch, no noise
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state==='suspended')actx.resume();
+    const t=actx.currentTime, o=actx.createOscillator(), g=actx.createGain();
+    o.type='sine';
+    o.frequency.setValueAtTime(on?1900:1400,t);
+    o.frequency.exponentialRampToValueAtTime(on?1250:900,t+0.04);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(on?0.18:0.12,t+0.003);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.05);
+    o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+0.06);
+  }catch(e){}
+}
+function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,1800)}
+function go(step){st.step=step;resetArmed=false;save();render();window.scrollTo(0,0)}
+
+document.addEventListener('click',e=>{
+  const tab=e.target.closest('[data-ind]');
+  if(tab){const box=tab.closest('.cos');
+    box.querySelectorAll('[data-ind]').forEach(b=>b.setAttribute('aria-selected',b===tab));
+    box.querySelectorAll('[data-panel]').forEach(u=>u.hidden=u.dataset.panel!==tab.dataset.ind);return}
+  const pk=e.target.closest('[data-pick]'), ac=e.target.closest('[data-act]');
+  if(pk){
+    const i=+pk.dataset.pick, p=picks(), lim=LIMIT[st.step], at=p.indexOf(i);
+    if(at>=0){p.splice(at,1);tick(false)}
+    else if(p.length>=lim){toast(`${lim}개를 모두 골랐어요. 바꾸려면 하나를 먼저 취소하세요.`);return}
+    else{p.push(i);tick(true);if(st.step==='s3')toast(`${p.length}순위: ${S[i].w}`)}
+    save();
+    const y=window.scrollY; render(); window.scrollTo(0,y);
+    return;
+  }
+  if(!ac) return;
+  const a=ac.dataset.act;
+  if(a==='start'){go('s1')}
+  else if(a==='ex'){st.ex=st.ex===ac.dataset.k?null:ac.dataset.k;const y=window.scrollY;render();window.scrollTo(0,y)}
+  else if(a==='next'){
+    if(st.step==='s1'){st.p5=st.p5.filter(i=>st.p10.includes(i));st.p3=st.p3.filter(i=>st.p5.includes(S[i].ti));go('s2')}
+    else if(st.step==='s2'){st.p3=st.p3.filter(i=>st.p5.includes(S[i].ti));go('s3')}
+    else go('result');
+  }
+  else if(a==='redo'){go('s3')}
+  else if(a==='back'){go({s1:'intro',s2:'s1',s3:'s2'}[st.step])}
+  else if(a==='reset'){
+    if(!resetArmed){resetArmed=true;$('resetBtn').textContent='한 번 더 누르면 처음으로 돌아가요';return}
+    st={step:'intro',p10:[],p5:[],p3:[]};go('intro');
+  }
+  else if(a==='copy'){
+    const {best}=mainTalent();
+    const txt='[강점 찾기 결과]\n'+st.p3.map((i,r)=>`${r+1}. ${S[i].w} (${S[i].type} · ${TALENTS[S[i].talent].name})`).join('\n')+`\n나의 인재유형: ${TALENTS[best].name}`;
+    const done=ok=>toast(ok?'결과를 복사했어요.':'복사가 안 돼요. 화면을 캡처해 주세요.');
+    try{navigator.clipboard.writeText(txt).then(()=>done(true),()=>done(false))}catch(err){done(false)}
+  }
+});
+
+function start(){
+  load();
+  if(st.step==='result'&&st.p3.length!==3) st.step='s3';
+  if(st.step==='s3'&&st.p5.length!==5) st.step='s2';
+  if(st.step==='s2'&&st.p10.length!==10) st.step='s1';
+  render();
+}
+start();
+</script>
+
+</body></html>
